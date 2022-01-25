@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const NotesSchema = new Schema({
     title:{
         type: String,
-        requred: true
+        required: true
     },
     description:{
         type: String,
-        requred: true
+        required: true
     },
     tag:{
         type: String,
