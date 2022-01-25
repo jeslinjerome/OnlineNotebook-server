@@ -44,7 +44,8 @@ router.post('/addnote', fetchuser, [
 
 // ROUTE 3: Update an existing Note using: PUT "/api/notes/updatenote/:id" login required.
 router.put('/updatenote/:id', fetchuser, async (req, res) => {
-    const {title, description, tag} = req.body;
+    try {
+        const {title, description, tag} = req.body;
     // Create a newNote Object
     const newNote = {};
     if(title){newNote.title = title};
@@ -60,8 +61,37 @@ router.put('/updatenote/:id', fetchuser, async (req, res) => {
         return res.status(401).send("Not Allowed");
     }
 
+    // MongoDb query for update
     note = await Notes.findByIdAndUpdate(req.params.id, {$set: newNote}, {new: true})
     res.json({note});
+    
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occured");
+    }
 })
+
+
+// ROUTE 4: Delete an existing Note using: DELETE "/api/notes/deletenote/:id" login required.
+router.delete('/deletenote/:id', fetchuser, async (req, res) => {
+    try {
+        //Find the note to be deleted and delete it
+    let note = await Notes.findById(req.params.id);
+    if(!note){ return res.status(404).send("Not Found")}
+
+    //will give id of the note, allow deletion only if it is the correct user's note
+    if(note.user.toString() !== req.user.id) {
+        return res.status(401).send("Not Allowed");
+    }
+
+    //MongoDb query for Delete
+    note = await Notes.findByIdAndDelete(req.params.id)
+    res.json({"Success": "Note has been deleted", note: note});
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occured");
+    }
+})
+
 
 module.exports = router;
