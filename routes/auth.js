@@ -19,10 +19,11 @@ router.post(
     }),
   ],
   async (req, res) => {
+    let success = false;
     // If there are errors, return Bad request and the errors.
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ success, errors: errors.array() });
     }
     // Check whether the user with this email exits already
     try {
@@ -30,7 +31,7 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ error: "Sorry a User with this email is already exists" });
+          .json({ success, error: "Sorry a User with this email is already exists" });
       }
       //password hashing with salt
       const salt = await bcrypt.genSalt(10);
@@ -51,7 +52,8 @@ router.post(
       const authtoken = jwt.sign(data, JWT_SECRET);
 
       //   res.json(user)
-      res.json({ authtoken });
+      success = true;
+      res.json({ success, authtoken });
     } catch (error) {
       //idealy we put in logger or sos
       console.error(error.message);
@@ -69,6 +71,7 @@ router.post(
     body("password", "Password cannot be blank").exists(),
   ],
   async (req, res) => {
+    let success = false;
     // If there are errors, return Bad request and the errors.
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -79,6 +82,7 @@ router.post(
       //pull user from the database
       let user = await User.findOne({ email });
       if (!user) {
+        success = false;
         return res
           .status(400)
           .json({ error: "Please login with correct credentials" });
@@ -86,9 +90,10 @@ router.post(
 
       const passwordCompare = await bcrypt.compare(password, user.password);
       if (!passwordCompare) {
+        success = false;
         return res
           .status(400)
-          .json({ error: "Please ter to login with correct credentials" });
+          .json({ success, error: "Please ter to login with correct credentials" });
       }
       // if password is correct send payload(data) - data of the user that i send
       const data = {
@@ -100,7 +105,8 @@ router.post(
       const authtoken = jwt.sign(data, JWT_SECRET);
 
       //   res.json(user)
-      res.json({ authtoken });
+      success = true;
+      res.json({ success, authtoken });
     } catch (error) {
       //idealy we put in logger or sos
       console.error(error.message);
